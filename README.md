@@ -8,6 +8,7 @@ An Ansible Role that configures and silently installs Informatica.
 
 Informatica will be installed at `/informatica/{{ environment_name }}`
 
+#### RHEL 6.8
 There is a minor issue with the installed informatica service running post-installation.
 It can be started by running a second ansible ad-hoc call (*where Dev2={{ environment_name }}*):
 ```bash
@@ -21,7 +22,7 @@ sudo service informatica_Dev2 start
 Requirements
 ------------
 
-* RHEL 6.8 (not compatible 7+)
+* RHEL 6.8, 7+
 * Accessible License Key File Path (`informatica.key_file`)
 * DB credentials (`informatica.db`)
 * Environment Name of your choosing (`environment_name`)
@@ -97,6 +98,7 @@ Role Variables
 Dependencies
 ------------
 - RHEL 6.8
+- RHEL 7+
 
 Example Playbook
 ----------------
