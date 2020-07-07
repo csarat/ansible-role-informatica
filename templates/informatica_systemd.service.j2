@@ -1,0 +1,33 @@
+[Unit]
+Description=Informatica Service
+After=syslog.target network.target
+
+[Service]
+Type=forking
+StandardOuput=console
+WorkingDirectory={{ informatica_install_directory }}/tomcat/bin/
+Environment=PATH={{ informatica_install_directory }}/ODBC7.1/bin:{{ informatica_install_directory }}/isp/bin:{{ informatica_install_directory }}/server/bin:{{ informatica_install_directory }}/tomcat/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin
+Environment=LANG=en_US.UTF-8
+Environment=INFA_CODEPAGENAME=UTF-8
+Environment=INFA_HOME={{ informatica_install_directory }}
+Environment=ODBC_HOME={{ informatica_install_directory }}/ODBC7.1
+Environment=ODBCINI={{ informatica_install_directory }}/ODBC7.1/odbc.ini
+Environment=ODBCINST={{ informatica_install_directory }}/ODBC7.1/odbcinst.ini
+Environment=JAVA_HOME={{ informatica_install_directory }}/java
+Environment=PC_SERVICE={{ informatica_install_directory }}/tomcat/bin
+Environment=INFA_SHARED={{ informatica_install_directory }}/services/shared
+Environment=KRB5_CONFIG={{ informatica_install_directory }}/services/shared/security/krb5.conf
+Environment=LD_LIBRARY_PATH=/usr/lib64:/usr/lib:/lib64:/lib:/u00/app/oracle/product/11203/client_1/lib:{{ informatica_install_directory }}/ODBC7.1/lib:{{ informatica_install_directory }}:{{ informatica_install_directory }}/server/bin
+Environment=HOME=/home/{{ informatica.owner }}
+Restart-on-failure
+RestartSec=15
+ExecStart={{ informatica_install_directory }}/tomcat/bin/infaservice.sh startup
+ExecStop={{ informatica_install_directory }}/tomcat/bin/infaservice.sh shutdown
+ExecReload={{ informatica_install_directory }}/tomcat/bin/infaservice.sh shutdown; {{ informatica_install_directory }}/tomcat/bin/infaservice.sh startup
+SyslogIdentifier=Informatica.Service
+
+User={{ informatica.owner }}
+Group={{ informatica.group }}
+
+[Install]
+WantedBy=default.target  

@@ -5,17 +5,8 @@
     dest: "{{ informatica_directory }}/SilentInput.properties"
     owner: "{{ informatica.owner }}"
     group: "{{ informatica.group }}"
-    mode: 0644
+    mode: "0644"
     remote_src: yes
-  become: yes
-
-- name: "Copy service sysvinit unit file"
-  template:
-    owner: "{{ informatica.owner }}"
-    group: "{{ informatica.group }}"
-    src: informatica.service.j2
-    dest: "/etc/init.d/informatica_{{ environment_name }}"
-    mode: "0744"
   become: yes
 
 - name: "Update permissions"
@@ -47,30 +38,76 @@
   become_user: "{{ informatica.owner }}"
   become: yes
 
-# At this point, it is expected for the Application launched by the shell block above to be killed due ot ansible exiting the session
-# Ensure it is stopped
-# This is not working correctly, but this seems to work:
-#ansible -m service 'rh68[0]' -a 'name=informatica_Dev2 state=started'
-#rh68test1.techlab.com | SUCCESS => {
-#    "changed": true,
-#    "name": "informatica_Dev2",
-#    "state": "started"
-#}
-#- name: "Stop"
-#  service:
-#    name: "informatica_{{ environment_name }}"
-#    state: stopped
-#  become: yes
-#  tags:
-#  - shutdown
-#
-## Start 'er up
-#- name: "Startup"
-#  service:
-#    name: "informatica_{{ environment_name }}"
-#    state: started
-#  become: yes
-#  tags:
-#  - start
-#  - startup
+- name: "Configure rh68 sysvinit services"
+  block: 
+  - name: "Copy service sysvinit unit file"
+    template:
+      owner: "{{ informatica.owner }}"
+      group: "{{ informatica.group }}"
+      src: informatica.service.j2
+      dest: "/etc/init.d/informatica_{{ environment_name }}"
+      mode: "0744"
+    become: yes
+      
+    # At this point, it is expected for the Application launched by the shell block above to be killed due ot ansible exiting the session
+    # Ensure it is stopped
+    # This is not working correctly, but this seems to work:
+    #ansible -m service 'rh68[0]' -a 'name=informatica_Dev2 state=started'
+    #rh68test1.techlab.com | SUCCESS => {
+    #    "changed": true,
+    #    "name": "informatica_Dev2",
+    #    "state": "started"
+    #}
+    #- name: "Stop"
+    #  service:
+    #    name: "informatica_{{ environment_name }}"
+    #    state: stopped
+    #  become: yes
+    #  tags:
+    #  - shutdown
+    #
+    ## Start 'er up
+    #- name: "Startup"
+    #  service:
+    #    name: "informatica_{{ environment_name }}"
+    #    state: started
+    #  become: yes
+    #  tags:
+    #  - start
+    #  - startup
+  when: ansible_distribution == "Red Hat Enterprise Linux" and ansible_distribution_version == '6.8'  
 
+- name: "Configure rh7+ systemd services"
+  block: 
+  - name: "Copy service systemd unit file"
+    template:
+      owner: root
+      group: root
+      src: informatica_systemd.service.j2
+      dest: "/etc/systemd/system/informatica_{{ environment_name }}.service"
+      mode: "0644"
+      backup: yes
+    become: yes
+
+  - name: "Shutdown"
+    systemd:
+      daemon_reload: yes
+      name: "informatica_{{ environment_name }}"
+      state: stopped
+      enabled: yes
+    become: yes
+    tags:
+    - shutdown
+
+  - name: "Startup"
+    systemd:
+      daemon_reload: yes  
+      name: "informatica_{{ environment_name }}"
+      state: restarted
+      enabled: yes
+    become: yes
+    tags:
+    - start
+    - startup
+    - restart
+  when: ansible_distribution == "Red Hat Enterprise Linux" and ansible_distribution_major_version|int >= 7
